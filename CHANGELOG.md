@@ -1,6 +1,14 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
 
+1.6.0
+-----
+- Prevent empty `src_incl_db` in submission
+- TransferLogs display updates
+- Fix List filter by status
+- Use the request host defined user for Host/DB introspections validation (instead of default `ensro`)
+- Restore full fields recovery (tgt_host and src_host) when Form errors spotted (initially lost)
+
 1.5.1
 -----
 - Added feature to prevent duplicated request_job insertion through GUI or API calls
