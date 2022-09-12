@@ -100,4 +100,5 @@ class ListDataCheckAllowedHost(APIView):
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)      
         
         return  Response(dc_allowed_hosts)
+        
     
