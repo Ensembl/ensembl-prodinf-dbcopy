@@ -9,18 +9,23 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import urllib.parse
+
 from django.contrib import admin, messages
 from django.contrib.admin.utils import model_ngettext
 from django.core.exceptions import ValidationError
 from django.db.models import F, Q, Count
 from django.db.models.query import QuerySet
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 
 from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
 from ensembl.production.dbcopy.models import Host, RequestJob, HostGroup, TargetHostGroup, TransferLog
 from ensembl.production.djcore.admin import SuperUserAdmin
+
+check_mk_base = 'https://sysops-monitoring.ebi.ac.uk/global/check_mk/index.py?start_url='
 
 
 class GroupInline(admin.TabularInline):
@@ -47,7 +52,7 @@ class TargetGroupInline(admin.TabularInline):
 
 
 @admin.register(Host)
-class HostItemAdmin(admin.ModelAdmin, SuperUserAdmin):
+class HostItemAdmin(admin.ModelAdmin):
     class Media:
         css = {
             'all': ('dbcopy/css/db_copy.css',)
@@ -55,16 +60,36 @@ class HostItemAdmin(admin.ModelAdmin, SuperUserAdmin):
 
     # form = HostRecordForm
     inlines = (GroupInline, TargetGroupInline)
-    list_display = ('name', 'port', 'mysql_user', 'virtual_machine', 'mysqld_file_owner', 'get_target_groups', 'active')
+    list_display = ('name', 'port', 'virtual_machine', 'get_target_groups', 'active', 'sysinf_link')
     fields = ('name', 'port', 'mysql_user', 'virtual_machine', 'mysqld_file_owner', 'active')
     search_fields = ('name', 'port', 'mysql_user', 'virtual_machine', 'mysqld_file_owner', 'active')
 
-    def get_target_groups(self, obj):
-        return ", ".join([str(each_group.target_group_name)
-                          for each_group in TargetHostGroup.objects.filter(target_host__auto_id=obj.auto_id)
-                          ])
+    def has_module_permission(self, request):
+        return request.user.is_staff
 
-    get_target_groups.short_description = 'Host Target Groups '
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def get_target_groups(self, obj):
+        return ", ".join([
+            str(each_group.target_group_name)
+            for each_group in TargetHostGroup.objects.filter(target_host__auto_id=obj.auto_id)
+        ])
+
+    def sysinf_link(self, obj):
+        if obj.virtual_machine:
+            return format_html("<a target='_blank' href='{}{}'>Server Status</a>",
+                               check_mk_base,
+                               urllib.parse.quote(
+                                   f"/global/check_mk/view.py?host={obj.virtual_machine}&view_name=host"))
+        else:
+            return ""
+
+    get_target_groups.short_description = 'Host Target Groups'
+    sysinf_link.short_description = "Host status check"
 
 
 class TransferLogInline(TabularInlinePaginated):
