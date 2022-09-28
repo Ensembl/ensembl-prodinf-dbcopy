@@ -17,7 +17,7 @@ before_script:
   - mysql -u root -e "FLUSH PRIVILEGES;"
 install:
   - pip install -U setuptools
-  - pip install importlib-metadata>=4.12
+  - pip install --upgrade importlib-metadata
   - pip install -r requirements-dev.txt
 script:
   - coverage run --source='.' ./src/manage.py test ensembl.production.dbcopy.tests.tests
