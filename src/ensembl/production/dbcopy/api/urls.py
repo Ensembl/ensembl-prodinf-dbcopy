@@ -49,7 +49,7 @@ urlpatterns = [
     re_path(r'transfers/(?P<job_id>[^/.]+)$', viewsets.TransferLogView.as_view(), name='transfers-list'),
     re_path(r'databases/(?P<host>[\w-]+)/(?P<port>\d+)', ListDatabases.as_view(), name='databaselist'),
     re_path(r'tables/(?P<host>[\w-]+)/(?P<port>\d+)/(?P<database>\w+)', ListTables.as_view(), name='tablelist'),
-    re_path(r'dcserversnames', ListDataCheckAllowedHost.as_view(), name='dcserversnames'),
+    re_path(r'dcservers', ListDataCheckAllowedHost.as_view(), name='dcservers'),
     re_path(r'swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path(f'docs', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
