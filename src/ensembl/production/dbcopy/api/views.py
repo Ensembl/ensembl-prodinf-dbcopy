@@ -80,3 +80,25 @@ class ListTables(APIView):
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         return Response(list(result))
+    
+class ListDataCheckAllowedHost(APIView):  
+    @csrf_exempt
+    def get(self, request, *args, **kwargs):
+        """
+        Return a list of allowed datacheck server hosts names 
+        """
+        try:
+            dc_allowed_hosts = {}
+            for host in Host.objects.filter(dc_allowed_server=True):
+                host_string = f"mysql://{host.mysql_user}@{host.name}:{host.port}/"
+                dc_allowed_hosts[host_string] = {
+                    'server_name': host.dc_server_name,
+                    'config_profile': host.dc_config_profile
+                }
+                  
+        except ValueError as e:
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)      
+        
+        return  Response(dc_allowed_hosts)
+        
+    

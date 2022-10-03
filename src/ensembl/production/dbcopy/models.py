@@ -478,6 +478,9 @@ class Host(models.Model):
     virtual_machine = models.CharField(max_length=255, blank=True, null=True)
     mysqld_file_owner = models.CharField(max_length=128, null=True, blank=True)
     active = models.BooleanField(default=True, blank=False)
+    dc_server_name = models.CharField(max_length=64, blank=True, null=True)
+    dc_config_profile = models.CharField(max_length=64, blank=True, null=True)
+    dc_allowed_server = models.BooleanField(default=False, blank=False)
 
     def __str__(self):
         return '{}:{}'.format(self.name, self.port)
