@@ -1,5 +1,9 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
+1.7.0
+-----
+- Added user/pass settings vars to enable usage with db_introspect module
+
 
 1.6.0
 -----

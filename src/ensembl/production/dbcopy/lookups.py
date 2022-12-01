@@ -16,6 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 from .models import Host, Dbs2Exclude
 from sqlalchemy.exc import DBAPIError
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -79,8 +80,8 @@ class DbLookup(autocomplete.Select2ListView):
                 host, port = self.forwarded.get('db_host').split(':')
                 name_filter = f".*{search.replace('%', '.*')}.*"
                 logger.debug("Filter set to %s", name_filter)
-                srv_host = Host.objects.get(name=host, port=port)
-                result = get_database_set(host, port, user=srv_host.mysql_user,
+                result = get_database_set(host, port, user=settings.INTROSPECT_DB_USER,
+                                          password=settings.INTROSPECT_DB_PASS,
                                           incl_filters=[name_filter],
                                           skip_filters=get_excluded_schemas())
 
@@ -106,7 +107,10 @@ class TableLookup(autocomplete.Select2ListView):
                 # TODO See if we could managed a set of default excluded tables
                 logger.debug("Inspecting %s:%s/%s w/ %s", host, port, database, self.q)
                 table_filter = f".*{self.q.replace('%', '.*')}.*"
-                result = get_table_set(host, port, database, incl_filters=[table_filter])
+                result = get_table_set(host, port, database,
+                                       user=settings.INTROSPECT_DB_USER,
+                                       password=settings.INTROSPECT_DB_PASS,
+                                       incl_filters=[table_filter])
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
                 logger.error("Db Table Lookup query error: %s ", str(e))

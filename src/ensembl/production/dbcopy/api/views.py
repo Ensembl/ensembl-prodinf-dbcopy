@@ -10,7 +10,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ensembl.production.dbcopy.lookups import get_database_set, get_table_set, get_excluded_schemas
-
+from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -41,7 +41,8 @@ class ListDatabases(APIView):
         try:
             srv_host = Host.objects.get(name=hostname, port=port)
             result = get_database_set(hostname=hostname, port=port,
-                                      user=srv_host.mysql_user,
+                                      user=settings.INTROSPECT_DB_USER,
+                                      password=settings.INTROSPECT_DB_PASS,
                                       incl_filters=filters_regexes,
                                       skip_filters=get_excluded_schemas())
         except ValueError as e:
@@ -74,6 +75,8 @@ class ListTables(APIView):
         try:
             result = get_table_set(hostname=hostname, port=port,
                                    database=database,
+                                   user=settings.INTROSPECT_DB_USER,
+                                   password=settings.INTROSPECT_DB_PASS,
                                    incl_filters=filters_regexes)
         except ValueError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)

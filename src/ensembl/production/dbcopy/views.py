@@ -16,6 +16,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.conf import settings
 from django.views.decorators.http import require_http_methods
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 
@@ -70,9 +71,9 @@ def requestjob_checks_warning(request):
         logger.debug("src_skip_filters %s", src_skip_filters)
         logger.debug("src_skip_db_set %s", src_skip_db_set)
         try:
-            server_host = Host.objects.get(name=src_hostname, port=src_port)
             src_db_set = get_database_set(hostname=src_hostname, port=src_port,
-                                          user=server_host.mysql_user,
+                                          user=settings.INTROSPECT_DB_USER,
+                                          password=settings.INTROSPECT_DB_PASS,
                                           incl_filters=src_incl_filters,
                                           skip_filters=src_skip_db_set)
             logger.debug("result_db_set %s", src_db_set)
@@ -82,7 +83,7 @@ def requestjob_checks_warning(request):
                 raise ValueError("No db matching incl. %s / excl. %s " % (src_incl_filters, src_skip_filters))
         except Exception as e:
             ajax_vars.update({'dberrors': {src_hostname: [str(e)]}})
-            return HttpResponse(json.dumps(ajax_vars), status=400, content_type='application/json')
+            return HttpResponse(json.dumps(ajax_vars), status=500, content_type='application/json')
 
         # 2. For each target:
         #   Retrieve all dbnames which match tgt_db_name
@@ -92,9 +93,9 @@ def requestjob_checks_warning(request):
             tgt_hostname, tgt_port = tgt_host.split(':')
             try:
                 logger.debug("tgt db names %s %s", tgt_hostname, tgt_db_names)
-                server_host = Host.objects.get(name=tgt_hostname, port=tgt_port)
                 tgt_db_set = get_database_set(hostname=tgt_hostname, port=tgt_port,
-                                              user=server_host.mysql_user,
+                                              user=settings.INTROSPECT_DB_USER,
+                                              password=settings.INTROSPECT_DB_PASS,
                                               incl_filters=tgt_db_names,
                                               skip_filters=excluded_schemas)
                 logger.debug("Found on target %s", tgt_db_set)
@@ -110,6 +111,8 @@ def requestjob_checks_warning(request):
                             logger.debug('src_db: %s:%s/%s, incl_table_filters: %s skip_table_filters: %s',
                                          src_hostname, src_port, src_database, incl_table_filter, skip_table_filter)
                             src_table_names = get_table_set(hostname=src_hostname, port=src_port,
+                                                            user=settings.INTROSPECT_DB_USER,
+                                                            password=settings.INTROSPECT_DB_PASS,
                                                             database=src_database,
                                                             incl_filters=incl_table_filter,
                                                             skip_filters=skip_table_filter)
@@ -117,6 +120,8 @@ def requestjob_checks_warning(request):
                                          tgt_hostname, tgt_port, tgt_database, src_table_names)
                             tgt_table_names = get_table_set(hostname=tgt_hostname, port=tgt_port,
                                                             database=tgt_database,
+                                                            user=settings.INTROSPECT_DB_USER,
+                                                            password=settings.INTROSPECT_DB_PASS,
                                                             incl_filters=src_table_names,
                                                             skip_filters=skip_table_filter)
                             logger.debug("tgt_table_names %s", tgt_table_names)
@@ -130,7 +135,7 @@ def requestjob_checks_warning(request):
             except Exception as e:
                 logger.error("Inspect error %s", str(e))
                 ajax_vars['dberrors'].update({tgt_hostname: [str(e)]})
-            return HttpResponse(json.dumps(ajax_vars), status=400, content_type='application/json')
+            # return HttpResponse(json.dumps(ajax_vars), status=400, content_type='application/json')
 
     if len(ajax_vars['dberrors']) > 0 or len(ajax_vars['tableerrors']) > 0:
         status_code = 400
