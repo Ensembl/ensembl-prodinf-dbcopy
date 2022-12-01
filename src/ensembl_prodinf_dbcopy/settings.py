@@ -132,5 +132,7 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'DEBUG' if DEBUG else 'WARNING',
     }
-
 }
+# User/password for introspect queries
+INTROSPECT_DB_USER="ensro"
+INTROSPECT_DB_PASS=""

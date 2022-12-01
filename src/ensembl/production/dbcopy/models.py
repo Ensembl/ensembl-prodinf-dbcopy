@@ -21,6 +21,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
+from django.conf import settings
 from django.utils.html import format_html
 from ensembl.production.core.db_introspects import get_database_set
 
@@ -199,9 +200,9 @@ class RequestJob(models.Model):
         name_filters = get_filters(getattr(self, field))
         filters_regexes = [f".*{name}.*" for name in name_filters]
         try:
-            srv_host = Host.objects.get(name=host, port=port)
             src_db_set = get_database_set(hostname=host, port=port,
-                                          user=srv_host.mysql_user,
+                                          user=settings.INTROSPECT_DB_USER,
+                                          password=settings.INTROSPECT_DB_PASS,
                                           incl_filters=filters_regexes,
                                           skip_filters=Dbs2Exclude.objects.values_list('table_schema', flat=True))
             if len(src_db_set) == 0:
@@ -239,7 +240,8 @@ class RequestJob(models.Model):
             try:
                 srv_host = Host.objects.get(name=hostname, port=port)
                 present_dbs = get_database_set(hostname, port,
-                                               user=srv_host.mysql_user,
+                                               user=settings.INTROSPECT_DB_USER,
+                                               password=settings.INTROSPECT_DB_PASS,
                                                skip_filters=Dbs2Exclude.objects.values_list('table_schema',
                                                                                             flat=True))
             except ValueError as e:
