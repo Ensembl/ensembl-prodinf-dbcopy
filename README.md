@@ -34,3 +34,36 @@ Check out repo from github
     ./manage.py check 
    ```
  
+Quick start with docker 
+-------------------------
+1. Build Docker Image
+    ```
+    sudo docker build -t dbcopy  . 
+
+    ```
+2.  Mirage the changes to DB
+    ```
+    sudo docker run --env DBNAME=dbcopy --env DBUSER=ensembl --env DBPASS=test --env DBHOST=localhost --env DBPORT=3306  -it --network=host dbcopy:latest /usr/src/app/src/manage.py migrate
+    
+    if mysqlsever in remote host use param --add-host
+
+    sudo docker run  --add-host <remote hostname>:<ip address>  --env DBNAME=dbcopy --env DBUSER=ensembl --env DBPASS=test --env DBHOST=<remote hostname> --env DBPORT=3306 -p 8000:8000  dbcopy:latest /usr/src/app/src/manage.py migrate
+
+    ```
+
+3. Run dev server
+    ```
+    sudo docker run --env DBNAME=dbcopy --env DBUSER=ensembl --env DBPASS=test --env DBHOST=localhost --env DBPORT=3306 -p 8000:8000  dbcopy:latest /usr/src/app/src/manage.py runserver 0.0.0.0:8000
+
+    if mysqlsever in remote host use param --add-host
+
+    sudo docker run --add-host <remote hostname>:<ip address> --env DBNAME=dbcopy --env DBUSER=ensembl --env DBPASS=test --env DBHOST=<remote hostname> --env DBPORT=3306 -p 8000:8000  dbcopy:latest /usr/src/app/src/manage.py runserver 0.0.0.0:8000
+    
+    ```
+
+4. Run dbcopy container with guincorn
+    ```
+    sudo docker run --env DBNAME=dbcopy --env DBUSER=ensembl --env DBPASS=test --env DBHOST=localhost --env DBPORT=3306 -p 8000:8000  dbcopy:latest
+
+    ```    
+
