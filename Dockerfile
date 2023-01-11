@@ -44,7 +44,6 @@ COPY --chown=appuser . /usr/src/app
 RUN pip install --upgrade pip
 RUN pip install gunicorn~=20.1.0
 RUN pip install -r requirements.txt
-RUN pip install mysqlclient
 RUN pip install .
 
 

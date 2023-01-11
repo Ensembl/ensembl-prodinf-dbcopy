@@ -5,5 +5,5 @@ drf-nested-routers~=0.93.4
 drf-yasg~=1.20.0
 django-autocomplete-light~=3.8.2
 ensembl-prodinf-core~=2.0.3
-mysqlclient==2.1.0
+mysqlclient~=2.1.0
 ensembl-prodinf-djcore@git+https://github.com/Ensembl/ensembl-prodinf-djcore.git@1.1#egg=ensembl-prodinf-djcore
