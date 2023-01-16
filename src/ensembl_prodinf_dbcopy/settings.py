@@ -12,6 +12,7 @@
 
 from pathlib import Path
 import sys
+import os
 
 DEBUG = True
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -72,11 +73,11 @@ WSGI_APPLICATION = 'ensembl_prodinf_dbcopy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'db_copy',
-        'USER': 'ensembl',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': 3306,
+        'NAME': os.getenv("DBNAME", 'dbcopy'),
+        'USER': os.getenv("DBUSER", 'ensembl'),
+        'PASSWORD': os.getenv("DBPASS", ''),
+        'HOST': os.getenv("DBHOST", 'localhost'),
+        'PORT': os.getenv("DBPORT", 3306),
     }
 }
 
