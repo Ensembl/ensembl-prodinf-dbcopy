@@ -1,5 +1,14 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
+1.7.0
+-----
+
+* Release init by @marcoooo in https://github.com/Ensembl/ensembl-prodinf-dbcopy/pull/30
+* EP-7721: Fix status filter on Request Job by @luca-drf in https://github.com/Ensembl/ensembl-prodinf-dbcopy/pull/31
+* Added link to sysops check MK monitor page in server list by @marcoooo in https://github.com/Ensembl/ensembl-prodinf-dbcopy/pull/33
+* new api endpoint dcserversnames added by @vinay-ebi in https://github.com/Ensembl/ensembl-prodinf-dbcopy/pull/32
+* Annual copyright update 2023 by @marcoooo in https://github.com/Ensembl/ensembl-prodinf-dbcopy/pull/34
+* Feature/dockerimage by @vinay-ebi in https://github.com/Ensembl/ensembl-prodinf-dbcopy/pull/35
 
 1.6.0
 -----
