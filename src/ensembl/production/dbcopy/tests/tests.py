@@ -19,9 +19,10 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from ensembl.production.dbcopy.models import RequestJob
+from django.conf import settings
 
 User = get_user_model()
-
+DB_HOST=settings.DATABASES['default']['HOST']
 
 class RequestJobTest(APITestCase):
     """ Test module for RequestJob model """
@@ -324,7 +325,7 @@ class DBIntrospectTest(APITestCase):
 
     def testDatabaseList(self):
         # Test getting test Production dbs
-        args = {'host': 'localhost', 'port': 3306}
+        args = {'host': DB_HOST, 'port': 3306}
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'test_homo'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -349,7 +350,7 @@ class DBIntrospectTest(APITestCase):
         self.assertEqual(len(response.data), 0)
 
     def testTableList(self):
-        args = {'host': 'localhost',
+        args = {'host': DB_HOST,
                 'port': 3306,
                 'database': 'test_homo_sapiens'}
         # Test getting meta_key table for Production dbs
@@ -362,7 +363,7 @@ class DBIntrospectTest(APITestCase):
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
                                    {'search': 'meta'})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        args['host'] = 'localhost'
+        args['host'] = DB_HOST
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
                                    {'search': 'unknown'})
         response_list = json.loads(response.content.decode('utf-8'))
