@@ -20,4 +20,4 @@ install:
   - pip install --upgrade importlib-metadata
   - pip install -r requirements-dev.txt
 script:
-  - coverage run --source='.' ./src/manage.py test ensembl.production.dbcopy.tests.tests
+  - coverage run ./src/manage.py test ensembl.production.dbcopy.tests.tests

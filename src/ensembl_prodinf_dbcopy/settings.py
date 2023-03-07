@@ -86,10 +86,10 @@ if 'test' in sys.argv:
         'homo_sapiens': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'homo_sapiens',
-            'USER': 'ensembl',
-            'PASSWORD': '',
-            'HOST': 'localhost',
-            'PORT': 3306,
+            'USER': os.getenv("DBUSER", 'ensembl'),
+            'PASSWORD': os.getenv("DBPASS", ''),
+            'HOST': os.getenv("DBHOST", 'localhost'),
+            'PORT': os.getenv("DBPORT", 3306),
         }
     })
     INSTALLED_APPS += ['ensembl.production.dbcopy.tests']
