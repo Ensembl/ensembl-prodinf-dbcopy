@@ -44,7 +44,7 @@ class ListDatabases(APIView):
                                       user=srv_host.mysql_user,
                                       incl_filters=filters_regexes,
                                       skip_filters=get_excluded_schemas())
-        except ValueError as e:
+        except (ValueError, Host.DoesNotExist) as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
@@ -72,10 +72,11 @@ class ListTables(APIView):
         filters = name_filter.union(name_matches).difference({''})
         filters_regexes = [f".*{name}.*" for name in filters]
         try:
+            srv_host = Host.objects.get(name=hostname, port=port)
             result = get_table_set(hostname=hostname, port=port,
-                                   database=database,
+                                   database=database, user=srv_host.mysql_user,
                                    incl_filters=filters_regexes)
-        except ValueError as e:
+        except (ValueError, Host.DoesNotExist) as e :
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)

@@ -334,7 +334,7 @@ class DBIntrospectTest(APITestCase):
         response = self.client.get(reverse('dbcopy_api:databaselist',
                                            kwargs={**args, 'host': 'bad-host'}),
                                    {'search': 'test_production_services'})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'no_result_search'})
@@ -362,6 +362,7 @@ class DBIntrospectTest(APITestCase):
         args['host'] = 'badhost-name'
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
                                    {'search': 'meta'})
+        print("response!!!!", response.json())
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         args['host'] = DB_HOST
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
