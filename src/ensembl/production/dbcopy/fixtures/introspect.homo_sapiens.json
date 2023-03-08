@@ -39,7 +39,9 @@
       "name": "mysql",
       "port": 3306,
       "mysql_user": "ensembl",
-      "mysqld_file_owner": "ensmysql"
+      "virtual_machine": "mysql-hlvm-0999.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
     }
   }
 ]

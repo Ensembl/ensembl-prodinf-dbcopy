@@ -11,6 +11,7 @@
 #   limitations under the License.
 
 import json
+import logging.config
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -20,9 +21,11 @@ from rest_framework.test import APITestCase
 
 from ensembl.production.dbcopy.models import RequestJob
 from django.conf import settings
+import logging
 
 User = get_user_model()
 DB_HOST=settings.DATABASES['default']['HOST']
+logger = logging.getLogger(__name__)
 
 class RequestJobTest(APITestCase):
     """ Test module for RequestJob model """
@@ -328,6 +331,7 @@ class DBIntrospectTest(APITestCase):
         args = {'host': DB_HOST, 'port': 3306}
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'test_homo'})
+        logger.info(f"Response: {response.json()}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
         self.assertEqual(response.data[0], 'test_homo_sapiens')
@@ -362,7 +366,6 @@ class DBIntrospectTest(APITestCase):
         args['host'] = 'badhost-name'
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
                                    {'search': 'meta'})
-        print("response!!!!", response.json())
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         args['host'] = DB_HOST
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
