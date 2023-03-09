@@ -14,6 +14,7 @@ import re
 import uuid
 
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -201,7 +202,8 @@ class RequestJob(models.Model):
         try:
             srv_host = Host.objects.get(name=host, port=port)
             src_db_set = get_database_set(hostname=host, port=port,
-                                          user=srv_host.mysql_user,
+                                          user=settings.DBCOPY_RO_USER,
+                                          password=settings.DBCOPY_RO_PASSWORD,
                                           incl_filters=filters_regexes,
                                           skip_filters=Dbs2Exclude.objects.values_list('table_schema', flat=True))
             if len(src_db_set) == 0:
@@ -238,8 +240,10 @@ class RequestJob(models.Model):
             hostname, port = self.src_host.split(':')
             try:
                 srv_host = Host.objects.get(name=hostname, port=port)
-                present_dbs = get_database_set(hostname, port,
-                                               user=srv_host.mysql_user,
+                present_dbs = get_database_set(hostname=hostname,
+                                               port=port,
+                                               user=settings.DBCOPY_RO_USER,
+                                               password=settings.DBCOPY_RO_PASSWORD,
                                                skip_filters=Dbs2Exclude.objects.values_list('table_schema',
                                                                                             flat=True))
             except ValueError as e:
@@ -292,7 +296,9 @@ class RequestJob(models.Model):
             for tgt_host in self.tgt_host.split(','):
                 hostname, port = tgt_host.split(':')
                 try:
-                    db_engine = get_engine(hostname, port)
+                    db_engine = get_engine(hostname=hostname, port=port,
+                                           user=settings.DBCOPY_RO_USER,
+                                           password=settings.DBCOPY_RO_PASSWORD)
                 except RuntimeError as e:
                     raise ValidationError({'tgt_host': 'Invalid host: %(tgt_host)s'}, 'invalid',
                                           {'tgt_host', tgt_host})
