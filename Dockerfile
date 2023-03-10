@@ -13,42 +13,35 @@
 # The first instruction is what image we want to base our container on
 # We Use an official Python runtime as a parent image
 
-FROM python:3.9
+FROM python:3.8.9-alpine
 
-RUN apt-get update && apt-get -y install \
-    build-essential \
-    default-mysql-client && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN useradd --create-home appuser
+RUN apk update
+RUN apk add git
+RUN apk add --no-cache mariadb-dev
+RUN apk add --no-cache musl-dev
+RUN apk add --no-cache gcc
+RUN apk add --no-cache libffi-dev
+RUN adduser -D appuser
 USER appuser
+WORKDIR /home/appuser
 
-#create virtual env
-RUN python -m venv /home/appuser/venv
-ENV PATH="/home/appuser/venv/bin:$PATH"
-
-# set environment varibles
+ENV PIP_ROOT_USER_ACTION=ignore
 ENV PYTHONDONTWRITEBYTECODE 1
-
 ENV PYTHONUNBUFFERED 1
-
 ENV DJANGO_SETTINGS_MODULE=ensembl_prodinf_dbcopy.settings
-
-# Set the working directory
-WORKDIR /usr/src/app
-
+ENV PATH="/home/appuser/.local/bin:${PATH}"
 # Copy the current directory contents into the container
-COPY --chown=appuser . /usr/src/app
+COPY --chown=appuser . /home/appuser
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --upgrade pip
-RUN pip install gunicorn~=20.1.0
-RUN pip install -r requirements.txt
+RUN pip install --upgrade setuptools
+RUN pip install --user -r requirements.txt
+RUN pip install --user gunicorn~=20.1.0
 RUN pip install .
 
-
-ENV PYTHONPATH=$PYTHONPATH:/usr/src/app/src
+ENV PYTHONPATH=$PYTHONPATH:/home/appuser/src
 EXPOSE 8000
 
-CMD  ["gunicorn", "--config", "/usr/src/app/gunicorn.conf.py", "-b", "0.0.0.0:8000", "ensembl_prodinf_dbcopy.wsgi:application"]
+CMD  ["gunicorn", "-c", "/home/appuser/gunicorn.conf.py", "ensembl_prodinf_dbcopy.wsgi:application"]
 
