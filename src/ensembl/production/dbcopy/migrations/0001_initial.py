@@ -27,19 +27,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='DebugLog',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('job_id', models.CharField(blank=True, max_length=128, null=True)),
-                ('sequence', models.IntegerField(blank=True, null=True)),
-                ('function', models.CharField(blank=True, max_length=128, null=True)),
-                ('value', models.TextField(blank=True, max_length=8192, null=True)),
-            ],
-            options={
-                'db_table': 'debug_log',
-            },
-        ),
-        migrations.CreateModel(
             name='Group',
             fields=[
                 ('group_id', models.BigAutoField(primary_key=True, serialize=False)),

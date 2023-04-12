@@ -13,18 +13,17 @@ import logging
 import re
 import uuid
 
-from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html
-from ensembl.production.core.db_introspects import get_database_set
 
+from ensembl.production.core.db_introspects import get_database_set
 from ensembl.production.dbcopy.utils import get_filters
 from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
 from ensembl.production.djcore.models import NullTextField
@@ -71,7 +70,7 @@ class RequestJob(models.Model):
 
     job_id = models.CharField(primary_key=True, max_length=128, default=uuid.uuid1, editable=False)
     src_host = models.TextField("Source Host", max_length=2048,
-                                validators=[RegexValidator(regex="^[\w-]+:[0-9]{4}",
+                                validators=[RegexValidator(regex="^[\w\.-]+:[0-9]{4}",
                                                            message="Source Host should be: host:port")])
     src_incl_db = models.TextField("Included Db(s)", max_length=2048, blank=False, null=False)
     src_skip_db = NullTextField("Skipped Db(s)", max_length=2048, blank=True, null=True)
@@ -117,7 +116,7 @@ class RequestJob(models.Model):
         """
         try:
             return User.objects.get(username=self.username)
-        except ObjectDoesNotExist:
+        except User.DoesNotExist:
             logger.error("Request job %s has no user attached", self.job_id)
             return AnonymousUser()
 
@@ -201,14 +200,15 @@ class RequestJob(models.Model):
         filters_regexes = [f".*{name}.*" for name in name_filters]
         try:
             srv_host = Host.objects.get(name=host, port=port)
-            src_db_set = get_database_set(hostname=host, port=port,
+            src_db_set = get_database_set(hostname=srv_host.name,
+                                          port=srv_host.port,
                                           user=settings.DBCOPY_RO_USER,
                                           password=settings.DBCOPY_RO_PASSWORD,
                                           incl_filters=filters_regexes,
                                           skip_filters=Dbs2Exclude.objects.values_list('table_schema', flat=True))
             if len(src_db_set) == 0:
                 raise ValidationError({'src_incl_db': 'No db matching incl. %s' % (name_filters,)})
-        except ValueError as e:
+        except (ValueError, Host.DoesNotExist) as e:
             raise ValidationError({field: str(e)})
 
     def clean_src_incl_db(self):
@@ -240,13 +240,13 @@ class RequestJob(models.Model):
             hostname, port = self.src_host.split(':')
             try:
                 srv_host = Host.objects.get(name=hostname, port=port)
-                present_dbs = get_database_set(hostname=hostname,
-                                               port=port,
+                present_dbs = get_database_set(hostname=srv_host.name,
+                                               port=srv_host.port,
                                                user=settings.DBCOPY_RO_USER,
                                                password=settings.DBCOPY_RO_PASSWORD,
                                                skip_filters=Dbs2Exclude.objects.values_list('table_schema',
                                                                                             flat=True))
-            except ValueError as e:
+            except (ValueError, Host.DoesNotExist) as e:
                 raise ValidationError({'src_host': 'Invalid source hostname or port'},
                                       'invalid')
             src_names = present_dbs
@@ -296,10 +296,12 @@ class RequestJob(models.Model):
             for tgt_host in self.tgt_host.split(','):
                 hostname, port = tgt_host.split(':')
                 try:
-                    db_engine = get_engine(hostname=hostname, port=port,
+                    srv_host = Host.objects.get(name=hostname, port=port)
+                    db_engine = get_engine(hostname=srv_host.name,
+                                           port=srv_host.port,
                                            user=settings.DBCOPY_RO_USER,
                                            password=settings.DBCOPY_RO_PASSWORD)
-                except RuntimeError as e:
+                except (RuntimeError, Host.DoesNotExist) as e:
                     raise ValidationError({'tgt_host': 'Invalid host: %(tgt_host)s'}, 'invalid',
                                           {'tgt_host', tgt_host})
                 tgt_present_db_names = set(get_schema_names(db_engine))

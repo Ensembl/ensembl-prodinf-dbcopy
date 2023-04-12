@@ -13,10 +13,10 @@ import logging
 
 from dal import autocomplete
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from sqlalchemy.exc import DBAPIError
+
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 from .models import Host, Dbs2Exclude
-from sqlalchemy.exc import DBAPIError
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class TgtHostLookup(autocomplete.Select2ListView):
             hosts = Host.objects.qs_tgt_host_for_user(self.q or '', self.request.user)
             result = [(str(host), str(host)) for host in hosts]
             logger.debug("Results %s", result)
-        except (ValueError, ObjectDoesNotExist) as e:
+        except (ValueError, Host.DoesNotExist) as e:
             # TODO manage proper error
             logger.error("Db Lookup query error: ", str(e))
             pass
@@ -81,12 +81,14 @@ class DbLookup(autocomplete.Select2ListView):
                 name_filter = f".*{search.replace('%', '.*')}.*"
                 logger.debug("Filter set to %s", name_filter)
                 srv_host = Host.objects.get(name=host, port=port)
-                result = get_database_set(host, port, user=settings.DBCOPY_RO_USER,
+                result = get_database_set(hostname=srv_host.name,
+                                          port=port,
+                                          user=settings.DBCOPY_RO_USER,
                                           password=settings.DBCOPY_RO_PASSWORD,
                                           incl_filters=[name_filter],
                                           skip_filters=get_excluded_schemas())
 
-            except (ValueError, ObjectDoesNotExist) as e:
+            except (ValueError, Host.DoesNotExist) as e:
                 # TODO manage proper error
                 logger.error("Db Lookup query error: ", str(e))
                 pass
@@ -108,11 +110,14 @@ class TableLookup(autocomplete.Select2ListView):
                 # TODO See if we could managed a set of default excluded tables
                 logger.debug("Inspecting %s:%s/%s w/ %s", host, port, database, self.q)
                 table_filter = f".*{self.q.replace('%', '.*')}.*"
-                result = get_table_set(hostname=host, port=port, database=database,
+                srv_host = Host.objects.get(name=host, port=port)
+                result = get_table_set(hostname=srv_host.name,
+                                       port=srv_host.port,
+                                       database=database,
                                        user=settings.DBCOPY_RO_USER,
                                        password=settings.DBCOPY_RO_PASSWORD,
                                        incl_filters=[table_filter])
-            except (ValueError, ObjectDoesNotExist) as e:
+            except (ValueError, Host.DoesNotExist) as e:
                 # TODO manage proper error
                 logger.error("Db Table Lookup query error: %s ", str(e))
                 pass

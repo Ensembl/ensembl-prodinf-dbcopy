@@ -10,12 +10,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
-from ensembl.production.dbcopy.models import TransferLog, RequestJob, Host
 from rest_framework import serializers
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from rest_framework.reverse import reverse
+
+from ensembl.production.dbcopy.models import TransferLog, RequestJob, Host
 
 User = get_user_model()
 
@@ -27,7 +27,7 @@ class BaseUserTimestampSerializer(serializers.Serializer):
         if "username" in data:
             try:
                 User.objects.get(username=data['username'])
-            except ObjectDoesNotExist:
+            except User.DoesNotExist:
                 exc = APIException(code='invalid', detail={"user": ["Unknown user " + data['username']]})
                 # hack to update status code. :-(
                 exc.status_code = status.HTTP_400_BAD_REQUEST

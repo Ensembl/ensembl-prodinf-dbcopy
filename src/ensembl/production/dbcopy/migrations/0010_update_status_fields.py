@@ -13,9 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.DeleteModel(
-            name='DebugLog',
-        ),
         migrations.AlterModelOptions(
             name='host',
             options={'ordering': ('name',), 'verbose_name': 'Host'},
