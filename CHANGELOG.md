@@ -1,5 +1,11 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
+1.7.1
+-----
+* Remove travis build (moved to gitlab-ci)
+* Updated configuration for gitlab-ci
+* Added settings variable to setup introspection connexion parameters
+
 1.7.0
 -----
 

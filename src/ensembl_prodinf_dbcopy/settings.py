@@ -86,10 +86,10 @@ if 'test' in sys.argv:
         'homo_sapiens': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'homo_sapiens',
-            'USER': 'ensembl',
-            'PASSWORD': '',
-            'HOST': 'localhost',
-            'PORT': 3306,
+            'USER': os.getenv("DBUSER", 'ensembl'),
+            'PASSWORD': os.getenv("DBPASS", ''),
+            'HOST': os.getenv("DBHOST", 'localhost'),
+            'PORT': os.getenv("DBPORT", 3306),
         }
     })
     INSTALLED_APPS += ['ensembl.production.dbcopy.tests']
@@ -104,6 +104,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+# DEFAULT READONLY USERS for DB introspect
+DBCOPY_RO_USER=os.getenv('DBCOPY_RO_USER', 'ensembl')
+DBCOPY_RO_PASSWORD=os.getenv('DBCOPY_RO_PASSWORD', '')
 
 LOGGING = {
     'version': 1,
@@ -133,5 +136,5 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'DEBUG' if DEBUG else 'WARNING',
     }
-
 }
+

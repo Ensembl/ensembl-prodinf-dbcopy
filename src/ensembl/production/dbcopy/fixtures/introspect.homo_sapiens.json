@@ -31,5 +31,17 @@
       "mysqld_file_owner": "mysql",
       "active": true
     }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 101,
+    "fields": {
+      "name": "mysql",
+      "port": 3306,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-0999.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
   }
 ]

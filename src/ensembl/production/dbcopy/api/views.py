@@ -9,20 +9,23 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ensembl.production.dbcopy.lookups import get_database_set, get_table_set, get_excluded_schemas
 
+from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.views.decorators.csrf import csrf_exempt
 
 from ensembl.production.dbcopy.models import Host
+from ensembl.production.core.db_introspects import get_database_set, get_table_set
+from ensembl.production.dbcopy.lookups import get_excluded_schemas
 
 
 class ListDatabases(APIView):
     """
     View to list all databases from a given server
     """
+
     @csrf_exempt
     def get(self, request, *args, **kwargs):
         return self.post(request, *args, **kwargs)
@@ -40,11 +43,12 @@ class ListDatabases(APIView):
         filters_regexes = [f".*{name}.*" for name in filters]
         try:
             srv_host = Host.objects.get(name=hostname, port=port)
-            result = get_database_set(hostname=hostname, port=port,
-                                      user=srv_host.mysql_user,
+            result = get_database_set(hostname=srv_host.name, port=srv_host.port,
+                                      user=settings.DBCOPY_RO_USER,
+                                      password=settings.DBCOPY_RO_PASSWORD,
                                       incl_filters=filters_regexes,
                                       skip_filters=get_excluded_schemas())
-        except ValueError as e:
+        except (ValueError, Host.DoesNotExist) as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
@@ -55,6 +59,7 @@ class ListTables(APIView):
     """
     View to list all tables from a given database
     """
+
     @csrf_exempt
     def get(self, request, *args, **kwargs):
         return self.post(request, *args, **kwargs)
@@ -72,16 +77,19 @@ class ListTables(APIView):
         filters = name_filter.union(name_matches).difference({''})
         filters_regexes = [f".*{name}.*" for name in filters]
         try:
-            result = get_table_set(hostname=hostname, port=port,
-                                   database=database,
+            srv_host = Host.objects.get(name=hostname, port=port)
+            result = get_table_set(hostname=srv_host.name, port=srv_host.port,
+                                   database=database, user=settings.DBCOPY_RO_USER,
+                                   password=settings.DBCOPY_RO_PASSWORD,
                                    incl_filters=filters_regexes)
-        except ValueError as e:
+        except (ValueError, Host.DoesNotExist) as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         return Response(list(result))
-    
-class ListDataCheckAllowedHost(APIView):  
+
+
+class ListDataCheckAllowedHost(APIView):
     @csrf_exempt
     def get(self, request, *args, **kwargs):
         """
@@ -95,10 +103,8 @@ class ListDataCheckAllowedHost(APIView):
                     'server_name': host.dc_server_name,
                     'config_profile': host.dc_config_profile
                 }
-                  
+
         except ValueError as e:
-            return Response(str(e), status=status.HTTP_404_NOT_FOUND)      
-        
-        return  Response(dc_allowed_hosts)
-        
-    
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+
+        return Response(dc_allowed_hosts)

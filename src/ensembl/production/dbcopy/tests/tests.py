@@ -11,6 +11,7 @@
 #   limitations under the License.
 
 import json
+import logging.config
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -19,9 +20,12 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from ensembl.production.dbcopy.models import RequestJob
+from django.conf import settings
+import logging
 
 User = get_user_model()
-
+DB_HOST=settings.DATABASES['default']['HOST']
+logger = logging.getLogger(__name__)
 
 class RequestJobTest(APITestCase):
     """ Test module for RequestJob model """
@@ -324,16 +328,17 @@ class DBIntrospectTest(APITestCase):
 
     def testDatabaseList(self):
         # Test getting test Production dbs
-        args = {'host': 'localhost', 'port': 3306}
+        args = {'host': DB_HOST, 'port': 3306}
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'test_homo'})
+        logger.info(f"Response: {response.json()}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
         self.assertEqual(response.data[0], 'test_homo_sapiens')
         response = self.client.get(reverse('dbcopy_api:databaselist',
                                            kwargs={**args, 'host': 'bad-host'}),
                                    {'search': 'test_production_services'})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'no_result_search'})
@@ -349,7 +354,7 @@ class DBIntrospectTest(APITestCase):
         self.assertEqual(len(response.data), 0)
 
     def testTableList(self):
-        args = {'host': 'localhost',
+        args = {'host': DB_HOST,
                 'port': 3306,
                 'database': 'test_homo_sapiens'}
         # Test getting meta_key table for Production dbs
@@ -362,7 +367,7 @@ class DBIntrospectTest(APITestCase):
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
                                    {'search': 'meta'})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        args['host'] = 'localhost'
+        args['host'] = DB_HOST
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
                                    {'search': 'unknown'})
         response_list = json.loads(response.content.decode('utf-8'))
