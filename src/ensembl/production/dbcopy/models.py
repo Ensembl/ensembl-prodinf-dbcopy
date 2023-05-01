@@ -495,6 +495,7 @@ class Host(models.Model):
     def ro_password(self):
         # Try to get a dedicated RO_USER password or return default
         if hasattr(settings, f'DBCOPY_RO_{self.ro_user.upper()}'):
+            logger.debug(f"Using settings DBCOPY_RO_{self.ro_user.upper()}")
             return getattr(settings, f'DBCOPY_RO_{self.ro_user.upper()}')
         return settings.DBCOPY_RO_PASSWORD
 
@@ -513,6 +514,7 @@ class Host(models.Model):
 
     def get_database_set(self, include=None, skip=None):
         from ensembl.production.core.db_introspects import get_database_set
+        logger.debug(f"Password set to '{self.ro_password.strip()}'")
         return get_database_set(hostname=self.name,
                                 port=self.port,
                                 user=self.ro_user,

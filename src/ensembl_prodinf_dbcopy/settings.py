@@ -93,6 +93,7 @@ if 'test' in sys.argv:
         }
     })
     INSTALLED_APPS += ['ensembl.production.dbcopy.tests']
+    DEBUG = True
 
 LANGUAGE_CODE = 'en-gb'
 
