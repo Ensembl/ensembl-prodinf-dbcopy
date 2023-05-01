@@ -105,8 +105,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # DEFAULT READONLY USERS for DB introspect
-DBCOPY_RO_USER=os.getenv('DBCOPY_RO_USER', 'ensro')
-DBCOPY_RO_PASSWORD=os.getenv('DBCOPY_RO_PASSWORD', '')
+DBCOPY_RO_USER = os.getenv('DBCOPY_RO_USER', 'ensro')
+DBCOPY_RO_PASSWORD = os.getenv('DBCOPY_RO_PASSWORD', '')
+DBCOPY_RO_ANONYMOUS = os.getenv('DBCOPY_RO_ANONYMOUS', '')
 
 LOGGING = {
     'version': 1,
@@ -137,4 +138,3 @@ LOGGING = {
         'level': 'DEBUG' if DEBUG else 'WARNING',
     }
 }
-
