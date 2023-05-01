@@ -73,7 +73,7 @@ WSGI_APPLICATION = 'ensembl_prodinf_dbcopy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv("DBNAME", 'dbcopy'),
+        'NAME': os.getenv("DBNAME", 'db_copy'),
         'USER': os.getenv("DBUSER", 'ensembl'),
         'PASSWORD': os.getenv("DBPASS", ''),
         'HOST': os.getenv("DBHOST", 'localhost'),
@@ -105,7 +105,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # DEFAULT READONLY USERS for DB introspect
-DBCOPY_RO_USER=os.getenv('DBCOPY_RO_USER', 'ensembl')
+DBCOPY_RO_USER=os.getenv('DBCOPY_RO_USER', 'ensro')
 DBCOPY_RO_PASSWORD=os.getenv('DBCOPY_RO_PASSWORD', '')
 
 LOGGING = {
