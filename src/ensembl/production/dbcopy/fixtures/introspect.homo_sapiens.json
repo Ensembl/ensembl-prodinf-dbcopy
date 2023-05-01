@@ -34,6 +34,19 @@
   },
   {
     "model": "ensembl_dbcopy.host",
+    "pk": 100,
+    "fields": {
+      "name": "ensembldb.ensembl.org",
+      "port": 5306,
+      "mysql_user": "ensembl",
+      "_ro_user": "anonymous",
+      "virtual_machine": "mysql-hlvm-074.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
     "pk": 101,
     "fields": {
       "name": "mysql",

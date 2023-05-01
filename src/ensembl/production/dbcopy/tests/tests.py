@@ -373,3 +373,12 @@ class DBIntrospectTest(APITestCase):
         response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response_list), 0)
+
+    def testDatabaseListEnsembl(self):
+        # Test getting from public DB: e.g. host with domain extension
+        args = {'host': 'ensembldb.ensembl.org', 'port': 5306}
+        response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
+                                   {'search': 'homo_sapiens_core%_38'})
+        logger.info(f"Response: {response.json()}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 10)
