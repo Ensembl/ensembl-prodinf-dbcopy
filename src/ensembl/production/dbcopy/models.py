@@ -506,7 +506,7 @@ class Host(models.Model):
         return get_table_set(hostname=self.name,
                              port=self.port,
                              user=self.ro_user,
-                             password=self.ro_password,
+                             password=self.ro_password.strip(),
                              database=database,
                              incl_filters=include,
                              skip_filters=skip)
@@ -516,7 +516,7 @@ class Host(models.Model):
         return get_database_set(hostname=self.name,
                                 port=self.port,
                                 user=self.ro_user,
-                                password=self.ro_password,
+                                password=self.ro_password.strip(),
                                 incl_filters=include,
                                 skip_filters=skip)
 
