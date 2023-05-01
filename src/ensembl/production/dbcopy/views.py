@@ -11,14 +11,12 @@
 #   limitations under the License.
 import logging
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
-from ensembl.production.core.db_introspects import get_database_set, get_table_set
 
 from ensembl.production.dbcopy.lookups import get_excluded_schemas
 from ensembl.production.dbcopy.models import RequestJob, Host
@@ -71,12 +69,8 @@ def requestjob_checks_warning(request):
         logger.debug("src_skip_filters %s", src_skip_filters)
         logger.debug("src_skip_db_set %s", src_skip_db_set)
         try:
-            server_host = Host.objects.get(name=src_hostname, port=src_port)
-            src_db_set = get_database_set(hostname=src_hostname, port=src_port,
-                                          user=settings.DBCOPY_RO_USER,
-                                          password=settings.DBCOPY_RO_PASSWORD,
-                                          incl_filters=src_incl_filters,
-                                          skip_filters=src_skip_db_set)
+            srv_host = Host.objects.get(name=src_hostname, port=src_port)
+            src_db_set = srv_host.get_database_set(include=src_incl_filters, skip=src_skip_db_set)
             logger.debug("result_db_set %s", src_db_set)
             if (not src_db_set) and (src_incl_filters or src_skip_filters):
                 # only raise error if no match, but only if any filter specified
@@ -94,12 +88,8 @@ def requestjob_checks_warning(request):
             tgt_hostname, tgt_port = tgt_host.split(':')
             try:
                 logger.debug("tgt db names %s %s", tgt_hostname, tgt_db_names)
-                server_host = Host.objects.get(name=tgt_hostname, port=tgt_port)
-                tgt_db_set = get_database_set(hostname=tgt_hostname, port=tgt_port,
-                                              user=settings.DBCOPY_RO_USER,
-                                              password=settings.DBCOPY_RO_PASSWORD,
-                                              incl_filters=tgt_db_names,
-                                              skip_filters=excluded_schemas)
+                srv_host = Host.objects.get(name=tgt_hostname, port=tgt_port)
+                tgt_db_set = srv_host.get_database_set(include=tgt_db_names, skip=excluded_schemas)
                 logger.debug("Found on target %s", tgt_db_set)
                 if len(tgt_db_set) > 0:
                     ajax_vars['dbwarnings'].update({tgt_hostname: list(sorted(tgt_db_set))})
@@ -112,20 +102,14 @@ def requestjob_checks_warning(request):
                         try:
                             logger.debug('src_db: %s:%s/%s, incl_table_filters: %s skip_table_filters: %s',
                                          src_hostname, src_port, src_database, incl_table_filter, skip_table_filter)
-                            src_table_names = get_table_set(hostname=src_hostname, port=src_port,
-                                                            user=settings.DBCOPY_RO_USER,
-                                                            password=settings.DBCOPY_RO_PASSWORD,
-                                                            database=src_database,
-                                                            incl_filters=incl_table_filter,
-                                                            skip_filters=skip_table_filter)
+                            src_table_names = srv_host.get_table_set(database=src_database,
+                                                                     include=incl_table_filter,
+                                                                     skip=skip_table_filter)
                             logger.debug('tgt_db: %s:%s/%s, incl_table_filters: %s',
                                          tgt_hostname, tgt_port, tgt_database, src_table_names)
-                            tgt_table_names = get_table_set(hostname=tgt_hostname, port=tgt_port,
-                                                            user=settings.DBCOPY_RO_USER,
-                                                            password=settings.DBCOPY_RO_PASSWORD,
-                                                            database=tgt_database,
-                                                            incl_filters=src_table_names,
-                                                            skip_filters=skip_table_filter)
+                            tgt_table_names = srv_host.get_table_set(database=tgt_database,
+                                                                     include=src_table_names,
+                                                                     skip=skip_table_filter)
                             logger.debug("tgt_table_names %s", tgt_table_names)
                             if len(tgt_table_names) > 0:
                                 ajax_vars['tablewarnings'].update({tgt_database: sorted(tgt_table_names)})

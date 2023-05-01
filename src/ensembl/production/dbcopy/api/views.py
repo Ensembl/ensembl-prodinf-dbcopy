@@ -10,15 +10,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.views.decorators.csrf import csrf_exempt
 
-from ensembl.production.dbcopy.models import Host
-from ensembl.production.core.db_introspects import get_database_set, get_table_set
 from ensembl.production.dbcopy.lookups import get_excluded_schemas
+from ensembl.production.dbcopy.models import Host
 
 
 class ListDatabases(APIView):
@@ -43,11 +41,7 @@ class ListDatabases(APIView):
         filters_regexes = [f".*{name}.*" for name in filters]
         try:
             srv_host = Host.objects.get(name=hostname, port=port)
-            result = get_database_set(hostname=srv_host.name, port=srv_host.port,
-                                      user=settings.DBCOPY_RO_USER,
-                                      password=settings.DBCOPY_RO_PASSWORD,
-                                      incl_filters=filters_regexes,
-                                      skip_filters=get_excluded_schemas())
+            result = srv_host.get_database_set(include=filters_regexes, skip=get_excluded_schemas())
         except (ValueError, Host.DoesNotExist) as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -78,10 +72,7 @@ class ListTables(APIView):
         filters_regexes = [f".*{name}.*" for name in filters]
         try:
             srv_host = Host.objects.get(name=hostname, port=port)
-            result = get_table_set(hostname=srv_host.name, port=srv_host.port,
-                                   database=database, user=settings.DBCOPY_RO_USER,
-                                   password=settings.DBCOPY_RO_PASSWORD,
-                                   incl_filters=filters_regexes)
+            result = srv_host.get_table_set(database=database, include=filters_regexes)
         except (ValueError, Host.DoesNotExist) as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
