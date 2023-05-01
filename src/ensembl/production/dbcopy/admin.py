@@ -60,8 +60,8 @@ class HostItemAdmin(admin.ModelAdmin):
 
     # form = HostRecordForm
     inlines = (GroupInline, TargetGroupInline)
-    list_display = ('name', 'port', 'virtual_machine', 'get_target_groups', 'active', 'sysinf_link')
-    fields = ('name', 'port', 'mysql_user', 'virtual_machine', 'mysqld_file_owner', 'active')
+    list_display = ('name', 'port', 'virtual_machine', 'get_target_groups', 'active', 'sysinf_link', 'ro_user')
+    fields = ('name', 'port', 'mysql_user', 'virtual_machine', 'mysqld_file_owner', 'active', '_ro_user')
     search_fields = ('name', 'port', 'mysql_user', 'virtual_machine', 'mysqld_file_owner', 'active')
 
     def has_module_permission(self, request):

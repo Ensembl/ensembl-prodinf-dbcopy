@@ -75,10 +75,10 @@ class RequestJob(models.Model):
     src_incl_tables = NullTextField("Included Table(s)", max_length=2048, blank=True, null=True)
     src_skip_tables = NullTextField("Skipped Table(s)", max_length=2048, blank=True, null=True)
     tgt_host = models.TextField("Target Host(s)", max_length=2048,
-                                validators=[ListFieldRegexValidator(regex="^[\w-]+:[0-9]{4}",
+                                validators=[ListFieldRegexValidator(regex=r"^\b[\w.-]+:[0-9]{4}\b",
                                                                     message="Target Hosts should be formatted like"
                                                                             " this host:port or "
-                                                                            "host1:port1,host2:port2")])
+                                                                            "host1[.domain]:port1,host2[.domain]:port2")])
     tgt_db_name = NullTextField("Target DbName(s)", max_length=2048, blank=True, null=True)
     tgt_directory = NullTextField(max_length=2048, blank=True, null=True)
     skip_optimize = models.BooleanField("Skip Target Optimize", default=False)
