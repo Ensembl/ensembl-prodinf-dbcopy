@@ -17,7 +17,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import F, Q, Count
 from django.db.models.query import QuerySet
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 
 from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
