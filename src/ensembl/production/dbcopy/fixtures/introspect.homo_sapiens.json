@@ -34,7 +34,7 @@
   },
   {
     "model": "ensembl_dbcopy.host",
-    "pk": 100,
+    "pk": 101,
     "fields": {
       "name": "ensembldb.ensembl.org",
       "port": 5306,
@@ -47,7 +47,7 @@
   },
   {
     "model": "ensembl_dbcopy.host",
-    "pk": 101,
+    "pk": 102,
     "fields": {
       "name": "mysql",
       "port": 3306,

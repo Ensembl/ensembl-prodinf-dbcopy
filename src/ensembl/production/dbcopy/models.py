@@ -277,7 +277,7 @@ class RequestJob(models.Model):
         :return: None
         :raise: ValidationError
         """
-        from ensembl.production.core.db_introspects import get_engine, get_schema_names
+        from ensembl.production.core.db_introspects import get_schema_names
         incl_db = _text_field_as_set(self.src_incl_db)
         tgt_db_names = _text_field_as_set(self.tgt_db_name)
         new_db_names = _text_field_as_set(self.tgt_db_name) if self.tgt_db_name else incl_db
@@ -286,10 +286,7 @@ class RequestJob(models.Model):
                 hostname, port = tgt_host.split(':')
                 try:
                     srv_host = Host.objects.get(name=hostname, port=port)
-                    db_engine = get_engine(hostname=srv_host.name,
-                                           port=srv_host.port,
-                                           user=settings.DBCOPY_RO_USER,
-                                           password=settings.DBCOPY_RO_PASSWORD)
+                    db_engine = srv_host.get_engine()
                 except (RuntimeError, Host.DoesNotExist) as e:
                     raise ValidationError({'tgt_host': 'Invalid host: %(tgt_host)s'}, 'invalid',
                                           {'tgt_host', tgt_host})
@@ -481,6 +478,14 @@ class Host(models.Model):
     _ro_user = models.CharField(max_length=32, blank=True, null=True, db_column='ro_user')
 
     @property
+    def qualified_name(self):
+        import re
+        if re.search('[a-z-]?(.ebi.ac.uk|.org)', self.name) or self.name in ('localhost', 'mysql'):
+            return self.name
+        else:
+            return f'{self.name}.ebi.ac.uk'
+
+    @property
     def ro_user(self):
         # Allow to override default behaviour to retrieve ro_user from DB data
         if self._ro_user:
@@ -504,7 +509,7 @@ class Host(models.Model):
 
     def get_table_set(self, database, include=None, skip=None):
         from ensembl.production.core.db_introspects import get_table_set
-        return get_table_set(hostname=self.name,
+        return get_table_set(hostname=self.qualified_name,
                              port=self.port,
                              user=self.ro_user,
                              password=self.ro_password,
@@ -515,12 +520,19 @@ class Host(models.Model):
     def get_database_set(self, include=None, skip=None):
         from ensembl.production.core.db_introspects import get_database_set
         logger.debug(f"Password set to '{self.ro_password.strip()}'")
-        return get_database_set(hostname=self.name,
+        return get_database_set(hostname=self.qualified_name,
                                 port=self.port,
                                 user=self.ro_user,
                                 password=self.ro_password,
                                 incl_filters=include,
                                 skip_filters=skip)
+
+    def get_engine(self):
+        from ensembl.production.core.db_introspects import get_engine
+        return get_engine(hostname=self.qualified_name,
+                          port=self.port,
+                          user=self.ro_user,
+                          password=self.ro_password)
 
 
 class TargetHostGroupManager(models.Manager):

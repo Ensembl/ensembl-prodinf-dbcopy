@@ -19,13 +19,13 @@ from django.core.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ensembl.production.dbcopy.models import RequestJob
+from ensembl.production.dbcopy.models import RequestJob, Host
 from django.conf import settings
-import logging
 
 User = get_user_model()
-DB_HOST=settings.DATABASES['default']['HOST']
+DB_HOST = settings.DATABASES['default']['HOST']
 logger = logging.getLogger(__name__)
+
 
 class RequestJobTest(APITestCase):
     """ Test module for RequestJob model """
@@ -373,6 +373,13 @@ class DBIntrospectTest(APITestCase):
         response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response_list), 0)
+
+    def testQualifiedNames(self):
+        tests = ['mysql-ens-rr-web-1-hh', 'ensembldb.ensembl.org', 'mysql-ens-sta-1.ebi.ac.uk']
+        expects = ['mysql-ens-rr-web-1-hh.ebi.ac.uk', 'ensembldb.ensembl.org', 'mysql-ens-sta-1.ebi.ac.uk']
+        for test, expect in zip(tests, expects):
+            host = Host(name=test)
+            self.assertEqual(host.qualified_name, expect)
 
 # TODO fix failing test on gitlab-runner on k8s. 
 #    def testDatabaseListEnsembl(self):

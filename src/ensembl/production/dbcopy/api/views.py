@@ -17,6 +17,9 @@ from rest_framework.views import APIView
 
 from ensembl.production.dbcopy.lookups import get_excluded_schemas
 from ensembl.production.dbcopy.models import Host
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ListDatabases(APIView):
@@ -42,7 +45,10 @@ class ListDatabases(APIView):
         try:
             srv_host = Host.objects.get(name=hostname, port=port)
             result = srv_host.get_database_set(include=filters_regexes, skip=get_excluded_schemas())
-        except (ValueError, Host.DoesNotExist) as e:
+        except Host.DoesNotExist as e:
+            logger.warning(f"Requested {hostname}:{port} doesn't exists in DB")
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+        except ValueError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
@@ -73,7 +79,10 @@ class ListTables(APIView):
         try:
             srv_host = Host.objects.get(name=hostname, port=port)
             result = srv_host.get_table_set(database=database, include=filters_regexes)
-        except (ValueError, Host.DoesNotExist) as e:
+        except Host.DoesNotExist as e:
+            logger.warning(f"Requested {hostname}:{port} doesn't exists in DB")
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+        except ValueError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
@@ -94,8 +103,6 @@ class ListDataCheckAllowedHost(APIView):
                     'server_name': host.dc_server_name,
                     'config_profile': host.dc_config_profile
                 }
-
         except ValueError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
-
         return Response(dc_allowed_hosts)
