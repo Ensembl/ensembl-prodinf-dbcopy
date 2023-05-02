@@ -375,8 +375,9 @@ class DBIntrospectTest(APITestCase):
         self.assertEqual(len(response_list), 0)
 
     def testQualifiedNames(self):
-        tests = ['mysql-ens-rr-web-1-hh', 'ensembldb.ensembl.org', 'mysql-ens-sta-1.ebi.ac.uk']
-        expects = ['mysql-ens-rr-web-1-hh.ebi.ac.uk', 'ensembldb.ensembl.org', 'mysql-ens-sta-1.ebi.ac.uk']
+        tests = ['mysql-ens-rr-web-1-hh', 'ensembldb.ensembl.org', 'mysql-ens-sta-1.ebi.ac.uk', 'localhost', 'mysql']
+        expects = ['mysql-ens-rr-web-1-hh.ebi.ac.uk', 'ensembldb.ensembl.org', 'mysql-ens-sta-1.ebi.ac.uk', 'localhost',
+                   'mysql']
         for test, expect in zip(tests, expects):
             host = Host(name=test)
             self.assertEqual(host.qualified_name, expect)
