@@ -12,10 +12,8 @@
 import logging
 
 from dal import autocomplete
-from django.conf import settings
 from sqlalchemy.exc import DBAPIError
 
-from ensembl.production.core.db_introspects import get_database_set, get_table_set
 from .models import Host, Dbs2Exclude
 
 logger = logging.getLogger(__name__)
@@ -81,13 +79,7 @@ class DbLookup(autocomplete.Select2ListView):
                 name_filter = f".*{search.replace('%', '.*')}.*"
                 logger.debug("Filter set to %s", name_filter)
                 srv_host = Host.objects.get(name=host, port=port)
-                result = get_database_set(hostname=srv_host.name,
-                                          port=port,
-                                          user=settings.DBCOPY_RO_USER,
-                                          password=settings.DBCOPY_RO_PASSWORD,
-                                          incl_filters=[name_filter],
-                                          skip_filters=get_excluded_schemas())
-
+                result = srv_host.get_database_set(include=[name_filter], skip=get_excluded_schemas())
             except (ValueError, Host.DoesNotExist) as e:
                 # TODO manage proper error
                 logger.error("Db Lookup query error: ", str(e))
@@ -111,12 +103,7 @@ class TableLookup(autocomplete.Select2ListView):
                 logger.debug("Inspecting %s:%s/%s w/ %s", host, port, database, self.q)
                 table_filter = f".*{self.q.replace('%', '.*')}.*"
                 srv_host = Host.objects.get(name=host, port=port)
-                result = get_table_set(hostname=srv_host.name,
-                                       port=srv_host.port,
-                                       database=database,
-                                       user=settings.DBCOPY_RO_USER,
-                                       password=settings.DBCOPY_RO_PASSWORD,
-                                       incl_filters=[table_filter])
+                result = srv_host.get_table_set(database=database, include=[table_filter])
             except (ValueError, Host.DoesNotExist) as e:
                 # TODO manage proper error
                 logger.error("Db Table Lookup query error: %s ", str(e))
@@ -124,4 +111,3 @@ class TableLookup(autocomplete.Select2ListView):
             except DBAPIError as e:
                 logger.error("TableLookup query error: %s ", str(e.orig))
         return result
-

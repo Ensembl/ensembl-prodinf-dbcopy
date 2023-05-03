@@ -23,8 +23,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html
 
-from ensembl.production.core.db_introspects import get_database_set
-from ensembl.production.dbcopy.utils import get_filters
 from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
 from ensembl.production.djcore.models import NullTextField
 
@@ -77,10 +75,10 @@ class RequestJob(models.Model):
     src_incl_tables = NullTextField("Included Table(s)", max_length=2048, blank=True, null=True)
     src_skip_tables = NullTextField("Skipped Table(s)", max_length=2048, blank=True, null=True)
     tgt_host = models.TextField("Target Host(s)", max_length=2048,
-                                validators=[ListFieldRegexValidator(regex="^[\w-]+:[0-9]{4}",
+                                validators=[ListFieldRegexValidator(regex=r"^\b[\w.-]+:[0-9]{4}\b",
                                                                     message="Target Hosts should be formatted like"
                                                                             " this host:port or "
-                                                                            "host1:port1,host2:port2")])
+                                                                            "host1[.domain]:port1,host2[.domain]:port2")])
     tgt_db_name = NullTextField("Target DbName(s)", max_length=2048, blank=True, null=True)
     tgt_directory = NullTextField(max_length=2048, blank=True, null=True)
     skip_optimize = models.BooleanField("Skip Target Optimize", default=False)
@@ -195,17 +193,14 @@ class RequestJob(models.Model):
                 'progress': self.progress}
 
     def _clean_db_set_for_filters(self, from_host, field):
+        from ensembl.production.dbcopy.utils import get_filters
         host, port = from_host.split(':')
         name_filters = get_filters(getattr(self, field))
         filters_regexes = [f".*{name}.*" for name in name_filters]
         try:
             srv_host = Host.objects.get(name=host, port=port)
-            src_db_set = get_database_set(hostname=srv_host.name,
-                                          port=srv_host.port,
-                                          user=settings.DBCOPY_RO_USER,
-                                          password=settings.DBCOPY_RO_PASSWORD,
-                                          incl_filters=filters_regexes,
-                                          skip_filters=Dbs2Exclude.objects.values_list('table_schema', flat=True))
+            src_db_set = srv_host.get_database_set(include=filters_regexes,
+                                                   skip=Dbs2Exclude.objects.values_list('table_schema', flat=True))
             if len(src_db_set) == 0:
                 raise ValidationError({'src_incl_db': 'No db matching incl. %s' % (name_filters,)})
         except (ValueError, Host.DoesNotExist) as e:
@@ -233,19 +228,13 @@ class RequestJob(models.Model):
         :return: None
         :raise: ValidationError
         """
-        from ensembl.production.core.db_introspects import get_database_set
-
         if self.src_host in self.tgt_host:
 
             hostname, port = self.src_host.split(':')
             try:
                 srv_host = Host.objects.get(name=hostname, port=port)
-                present_dbs = get_database_set(hostname=srv_host.name,
-                                               port=srv_host.port,
-                                               user=settings.DBCOPY_RO_USER,
-                                               password=settings.DBCOPY_RO_PASSWORD,
-                                               skip_filters=Dbs2Exclude.objects.values_list('table_schema',
-                                                                                            flat=True))
+                present_dbs = srv_host.get_database_set(skip=Dbs2Exclude.objects.values_list('table_schema',
+                                                                                             flat=True))
             except (ValueError, Host.DoesNotExist) as e:
                 raise ValidationError({'src_host': 'Invalid source hostname or port'},
                                       'invalid')
@@ -288,7 +277,7 @@ class RequestJob(models.Model):
         :return: None
         :raise: ValidationError
         """
-        from ensembl.production.core.db_introspects import get_engine, get_schema_names
+        from ensembl.production.core.db_introspects import get_schema_names
         incl_db = _text_field_as_set(self.src_incl_db)
         tgt_db_names = _text_field_as_set(self.tgt_db_name)
         new_db_names = _text_field_as_set(self.tgt_db_name) if self.tgt_db_name else incl_db
@@ -297,10 +286,7 @@ class RequestJob(models.Model):
                 hostname, port = tgt_host.split(':')
                 try:
                     srv_host = Host.objects.get(name=hostname, port=port)
-                    db_engine = get_engine(hostname=srv_host.name,
-                                           port=srv_host.port,
-                                           user=settings.DBCOPY_RO_USER,
-                                           password=settings.DBCOPY_RO_PASSWORD)
+                    db_engine = srv_host.get_engine()
                 except (RuntimeError, Host.DoesNotExist) as e:
                     raise ValidationError({'tgt_host': 'Invalid host: %(tgt_host)s'}, 'invalid',
                                           {'tgt_host', tgt_host})
@@ -489,9 +475,64 @@ class Host(models.Model):
     dc_server_name = models.CharField(max_length=64, blank=True, null=True)
     dc_config_profile = models.CharField(max_length=64, blank=True, null=True)
     dc_allowed_server = models.BooleanField(default=False, blank=False)
+    _ro_user = models.CharField(max_length=32, blank=True, null=True, db_column='ro_user')
+
+    @property
+    def qualified_name(self):
+        import re
+        if re.search('[a-z-]?(.ebi.ac.uk|.org)', self.name) or self.name in ('localhost', 'mysql'):
+            return self.name
+        else:
+            return f'{self.name}.ebi.ac.uk'
+
+    @property
+    def ro_user(self):
+        # Allow to override default behaviour to retrieve ro_user from DB data
+        if self._ro_user:
+            return self._ro_user
+        return settings.DBCOPY_RO_USER
+
+    @ro_user.setter
+    def ro_user(self, value):
+        self._ro_user = value
+
+    @property
+    def ro_password(self):
+        # Try to get a dedicated RO_USER password or return default
+        if hasattr(settings, f'DBCOPY_RO_{self.ro_user.upper()}'):
+            logger.debug(f"Using settings DBCOPY_RO_{self.ro_user.upper()}")
+            return getattr(settings, f'DBCOPY_RO_{self.ro_user.upper()}')
+        return settings.DBCOPY_RO_PASSWORD
 
     def __str__(self):
         return '{}:{}'.format(self.name, self.port)
+
+    def get_table_set(self, database, include=None, skip=None):
+        from ensembl.production.core.db_introspects import get_table_set
+        return get_table_set(hostname=self.qualified_name,
+                             port=self.port,
+                             user=self.ro_user,
+                             password=self.ro_password,
+                             database=database,
+                             incl_filters=include,
+                             skip_filters=skip)
+
+    def get_database_set(self, include=None, skip=None):
+        from ensembl.production.core.db_introspects import get_database_set
+        logger.debug(f"Password set to '{self.ro_password.strip()}'")
+        return get_database_set(hostname=self.qualified_name,
+                                port=self.port,
+                                user=self.ro_user,
+                                password=self.ro_password,
+                                incl_filters=include,
+                                skip_filters=skip)
+
+    def get_engine(self):
+        from ensembl.production.core.db_introspects import get_engine
+        return get_engine(hostname=self.qualified_name,
+                          port=self.port,
+                          user=self.ro_user,
+                          password=self.ro_password)
 
 
 class TargetHostGroupManager(models.Manager):

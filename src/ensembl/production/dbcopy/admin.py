@@ -17,7 +17,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import F, Q, Count
 from django.db.models.query import QuerySet
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 
 from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
@@ -60,8 +59,8 @@ class HostItemAdmin(admin.ModelAdmin):
 
     # form = HostRecordForm
     inlines = (GroupInline, TargetGroupInline)
-    list_display = ('name', 'port', 'virtual_machine', 'get_target_groups', 'active', 'sysinf_link')
-    fields = ('name', 'port', 'mysql_user', 'virtual_machine', 'mysqld_file_owner', 'active')
+    list_display = ('name', 'port', 'virtual_machine', 'get_target_groups', 'active', 'sysinf_link', 'ro_user')
+    fields = ('name', 'port', 'mysql_user', 'virtual_machine', 'mysqld_file_owner', 'active', '_ro_user')
     search_fields = ('name', 'port', 'mysql_user', 'virtual_machine', 'mysqld_file_owner', 'active')
 
     def has_module_permission(self, request):
