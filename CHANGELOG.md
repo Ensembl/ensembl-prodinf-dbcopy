@@ -1,5 +1,8 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
+1.7.2
+-----
+* Moved to pypi for ensembl-prodinf-djcore dependency, allowing version range.
 1.7.1
 -----
 * Remove travis build (moved to gitlab-ci)
