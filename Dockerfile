@@ -13,7 +13,7 @@
 # The first instruction is what image we want to base our container on
 # We Use an official Python runtime as a parent image
 
-FROM python:3.8.9-alpine
+FROM python:3.10-alpine
 
 RUN apk update
 RUN apk add git

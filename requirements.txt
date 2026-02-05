@@ -7,3 +7,4 @@ django-autocomplete-light~=3.8.2
 ensembl-prodinf-core~=2.0.3
 mysqlclient~=2.1.0
 ensembl-prodinf-djcore>=1.2.0.dev1,<2.0.0
+urllib3~=1.26.19
