@@ -17,7 +17,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import F, Q, Count
 from django.db.models.query import QuerySet
 from django.utils.html import format_html
-from django_admin_inline_paginator.admin import TabularInlinePaginated
+from django_admin_inline_paginator_plus.admin import TabularInlinePaginated
 
 from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm

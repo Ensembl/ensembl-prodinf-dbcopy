@@ -13,7 +13,7 @@
 # The first instruction is what image we want to base our container on
 # We Use an official Python runtime as a parent image
 
-FROM python:3.8.9-alpine
+FROM python:3.12-alpine
 
 RUN apk update
 RUN apk add git
@@ -21,6 +21,7 @@ RUN apk add --no-cache mariadb-dev
 RUN apk add --no-cache musl-dev
 RUN apk add --no-cache gcc
 RUN apk add --no-cache libffi-dev
+RUN apk add --no-cache pkgconfig
 RUN adduser -D appuser
 USER appuser
 WORKDIR /home/appuser
@@ -33,12 +34,8 @@ ENV PATH="/home/appuser/.local/bin:${PATH}"
 # Copy the current directory contents into the container
 COPY --chown=appuser . /home/appuser
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --upgrade pip
-RUN pip install --upgrade setuptools
-RUN pip install --user -r requirements.txt
-RUN pip install --user gunicorn~=20.1.0
-RUN pip install .
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install --user .
 
 ENV PYTHONPATH=$PYTHONPATH:/home/appuser/src
 EXPOSE 8000

@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ensembl.production.dbcopy',
     'rest_framework',
-    'django_admin_inline_paginator'
+    'django_admin_inline_paginator_plus'
 ]
 
 MIDDLEWARE = [

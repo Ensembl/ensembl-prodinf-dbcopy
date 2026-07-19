@@ -1,0 +1,87 @@
+# .. See the NOTICE file distributed with this work for additional information
+#    regarding copyright ownership.
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#        http://www.apache.org/licenses/LICENSE-2.0
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools",
+    "wheel",
+]
+
+[project]
+name = "ensembl-prodinf-dbcopy"
+description = "Ensembl Production infrastructure dbcopy package"
+requires-python = ">=3.12,<3.13"
+dynamic = ["version", "readme"]
+authors = [
+    { name = "Marc Chakiachvili", email = "mchakiachvili@ebi.ac.uk" },
+    { name = "James Allen", email = "jallen@ebi.ac.uk" },
+    { name = "Luca Da Rin Fioretto", email = "ldrf@ebi.ac.uk" },
+    { name = "Vinay Kaikala", email = "vkaikala@ebi.ac.uk" },
+]
+maintainers = [
+    { name = "Ensembl Production Team", email = "ensembl-production@ebi.ac.uk" },
+]
+license = { text = "APACHE 2.0" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Environment :: Console",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities",
+    "Topic :: System :: Distributed Computing",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+]
+# Django is pinned to the 5.2 LTS line, which requires Python >=3.12.
+# NOTE: drf-yasg and django-admin-inline-paginator have no confirmed Django 5.2+
+# support upstream as of writing - see punch-list called out to the user.
+dependencies = [
+    "Django>=5.2,<5.3",
+    "django-admin-inline-paginator-plus>=0.1.5",
+    "djangorestframework>=3.15",
+    "drf-yasg>=1.21.7",
+    "drf-nested-routers>=0.95.0",
+    "django-autocomplete-light>=5.0.0",
+    "ensembl-prodinf-core @ git+https://github.com/Ensembl/ensembl-prodinf-core.git@5.2.0dev1",
+    "ensembl-prodinf-djcore @ git+https://github.com/Ensembl/ensembl-prodinf-djcore.git@5.2.0dev1",
+    "mysqlclient>=2.2.0",
+    "gunicorn>=21.2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Ensembl/ensembl-prodinf-dbcopy"
+Repository = "https://github.com/Ensembl/ensembl-prodinf-dbcopy"
+
+[project.optional-dependencies]
+test = [
+    "coverage>=5.3",
+]
+dev = [
+    "ensembl-prodinf-dbcopy[test]",
+    "django-debug-toolbar>=7.0.0",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["ensembl.production.*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "ensembl_prodinf_dbcopy._version.__version__" }
+readme = { file = ["README.md"] }
