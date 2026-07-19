@@ -68,7 +68,7 @@ class RequestJob(models.Model):
 
     job_id = models.CharField(primary_key=True, max_length=128, default=uuid.uuid1, editable=False)
     src_host = models.TextField("Source Host", max_length=2048,
-                                validators=[RegexValidator(regex="^[\w\.-]+:[0-9]{4}",
+                                validators=[RegexValidator(regex=r"^[\w\.-]+:[0-9]{4}",
                                                            message="Source Host should be: host:port")])
     src_incl_db = models.TextField("Included Db(s)", max_length=2048, blank=False, null=False)
     src_skip_db = NullTextField("Skipped Db(s)", max_length=2048, blank=True, null=True)
