@@ -56,7 +56,7 @@ dependencies = [
     "drf-nested-routers>=0.95.0",
     "django-autocomplete-light>=5.0.0",
     "ensembl-prodinf-core @ git+https://github.com/Ensembl/ensembl-prodinf-core.git@5.2.0.dev1",
-    "ensembl-prodinf-djcore @ git+https://github.com/Ensembl/ensembl-prodinf-djcore.git@5.2.0dev1",
+    "ensembl-prodinf-djcore @ git+https://github.com/Ensembl/ensembl-prodinf-djcore.git@5.2.0.dev1",
     "mysqlclient>=2.2.0",
     "gunicorn>=21.2.0",
 ]
